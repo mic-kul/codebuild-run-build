@@ -111,14 +111,16 @@ async function waitForBuildEndTime(
 
   if (errObject) {
     //We caught an error in trying to make the AWS api call, and are now checking to see if it was just a rate limiting error
+    core.info(`MKD Caught error...`);
     if (errObject.message && errObject.message.search("Rate exceeded") !== -1) {
       // We were rate-limited, so add backoff with Full Jitter, ref: https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
+      core.info(`MKD Caught error... rate limited`);
       let jitteredBackOff = Math.floor(
         Math.random() * (updateBackOff * 2 ** throttleCount)
       );
       let newWait = updateInterval + jitteredBackOff;
       throttleCount++;
-
+      core.info(`MKD Caught error... rate limited ${throttleCount} times, waiting ${newWait} before trying again`);
       //Sleep before trying again
       await new Promise((resolve) => setTimeout(resolve, newWait));
 
@@ -163,6 +165,10 @@ async function waitForBuildEndTime(
     return current;
   }
 
+  if (current.endTime) {
+    core.info(`MKD Build finished`);
+  }
+
   // More to do: Sleep for a few seconds to avoid rate limiting
   // If never throttled and build is complete, halve CWL polling delay to minimize latency
   await new Promise((resolve) =>
@@ -173,6 +179,10 @@ async function waitForBuildEndTime(
         : updateInterval
     )
   );
+
+  if (current.endTime) {
+    core.info(`MKD Build finished. Returning to check for logs`);
+  }
 
   // Try again
   return waitForBuildEndTime(
