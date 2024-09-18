@@ -156,10 +156,13 @@ async function waitForBuildEndTime(
   // Empty response counter starts after any logs have been received, or when the build completes.
   if (events.length == 0 && (totalEvents > 0 || current.endTime)) {
     seqEmptyLogs++;
+    core.info(`MKD seqEmptyLogs ${seqEmptyLogs}`);
   } else {
+    core.info(`MKD seqEmptyLogs RESET`);
     seqEmptyLogs = 0;
   }
   totalEvents += events.length;
+  core.info(`MKD totalEvents ${totalEvents}`);
 
   // stdout the CloudWatchLog (everyone likes progress...)
   // CloudWatchLogs have line endings.
@@ -169,6 +172,7 @@ async function waitForBuildEndTime(
 
   // Stop after the build is ended and we've received two consecutive empty log responses
   if (current.endTime && seqEmptyLogs >= 2) {
+    core.info(`MKD Stop after the build is ended and we've received two consecutive empty log responses`);
     return current;
   }
 
