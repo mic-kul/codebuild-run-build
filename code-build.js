@@ -42,6 +42,7 @@ function runBuild() {
 }
 
 async function build(sdk, params, config) {
+  core.info('MKD enhanced logging....')
   // Start the build
   const start = await sdk.codeBuild.startBuild(params);
 
