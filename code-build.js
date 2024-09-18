@@ -86,31 +86,36 @@ async function waitForBuildEndTime(
   const startFromHead = true;
   const { cloudWatchLogsArn } = logs;
   const { logGroupName, logStreamName } = logName(cloudWatchLogsArn);
-
-  let errObject = false;
-  // Check the state
-  const [batch, cloudWatch = {}] = await Promise.all([
-    codeBuild.batchGetBuilds({ ids: [id] }),
-    !hideCloudWatchLogs &&
-      logGroupName &&
-      core.info(`MKD getLogEvents ${logGroupName} ${logStreamName}, startFromHead: ${startFromHead}, nextToken: ${nextToken}`) &&
-      cloudWatchLogs // only make the call if hideCloudWatchLogs is not enabled and a logGroupName exists
-        .getLogEvents({
+let errObject = false;
+// Check the state
+const [batch, cloudWatch = {}] = await Promise.all([
+  codeBuild.batchGetBuilds({ ids: [id] }),
+  !hideCloudWatchLogs &&
+    logGroupName &&
+    cloudWatchLogs // only make the call if hideCloudWatchLogs is not enabled and a logGroupName exists
+      .getLogEvents({
+        logGroupName,
+        logStreamName,
+        startFromHead,
+        nextToken,
+      }).then((result) => {
+        console.log('getLogEvents called with:', {
           logGroupName,
           logStreamName,
           startFromHead,
           nextToken,
-        }),
-  ]).catch((err) => {
-    errObject = err;
-    /* Returning [] here so that the assignment above
-     * does not throw `TypeError: undefined is not iterable`.
-     * The error is handled below,
-     * since it might be a rate limit.
-     */
-    return [];
-  });
-
+        });
+        return result;
+      }),
+]).catch((err) => {
+  errObject = err;
+  /* Returning [] here so that the assignment above
+   * does not throw `TypeError: undefined is not iterable`.
+   * The error is handled below,
+   * since it might be a rate limit.
+   */
+  return [];
+});
   if (errObject) {
     //We caught an error in trying to make the AWS api call, and are now checking to see if it was just a rate limiting error
     core.info(`MKD Caught error...`);
