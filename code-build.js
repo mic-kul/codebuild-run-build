@@ -93,6 +93,7 @@ async function waitForBuildEndTime(
     codeBuild.batchGetBuilds({ ids: [id] }),
     !hideCloudWatchLogs &&
       logGroupName &&
+      core.info(`MKD getLogEvents ${logGroupName} ${logStreamName}, startFromHead: ${startFromHead}, nextToken: ${nextToken}`) &&
       cloudWatchLogs // only make the call if hideCloudWatchLogs is not enabled and a logGroupName exists
         .getLogEvents({
           logGroupName,
